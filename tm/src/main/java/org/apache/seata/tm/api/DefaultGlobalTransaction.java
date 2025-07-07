@@ -110,6 +110,9 @@ public class DefaultGlobalTransaction implements GlobalTransaction {
             throw new IllegalStateException("Global transaction already exists,"
                     + " can't begin a new global transaction, currentXid = " + currentXid);
         }
+        // note: 对于客户端transactionManager实现类为DefaultTransactionManager
+        // 包装为GlobalBeginRequest发送远程请求开启事务
+        // seata server端接受请求处理开启事务: ServerOnRequestProcessor -> DefaultCoordinator -> GlobalBeginRequest.handle
         xid = transactionManager.begin(null, null, name, timeout);
         status = GlobalStatus.Begin;
         RootContext.bind(xid);
@@ -137,6 +140,8 @@ public class DefaultGlobalTransaction implements GlobalTransaction {
             while (retry > 0) {
                 try {
                     retry--;
+                    // note: transactionManager为DefaultTransactionManager，发送GlobalCommitRequest请求
+                    // seata server端接受请求处理提交事务: ServerOnRequestProcessor -> DefaultCoordinator -> GlobalCommitRequest.handle
                     status = transactionManager.commit(xid);
                     break;
                 } catch (Throwable ex) {
@@ -180,6 +185,8 @@ public class DefaultGlobalTransaction implements GlobalTransaction {
             while (retry > 0) {
                 try {
                     retry--;
+                    // note: transactionManager为DefaultTransactionManager，发送GlobalRollbackRequest请求
+                    // seata server端接受请求处理回滚事务: ServerOnRequestProcessor -> DefaultCoordinator -> GlobalRollbackRequest.handle
                     status = transactionManager.rollback(xid);
                     break;
                 } catch (Throwable ex) {

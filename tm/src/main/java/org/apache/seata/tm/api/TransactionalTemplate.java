@@ -87,6 +87,7 @@ public class TransactionalTemplate {
                     // Continue and execute with new transaction
                     break;
                 case REQUIRED:
+                    // note: 默认的事务传播
                     // If current transaction is existing, execute with current transaction,else create
                     tx = GlobalTransactionContext.getCurrentOrCreate();
                     break;
@@ -122,19 +123,24 @@ public class TransactionalTemplate {
             try {
                 // 2. If the tx role is 'GlobalTransactionRole.Launcher', send the request of beginTransaction to TC,
                 //    else do nothing. Of course, the hooks will still be triggered.
+                // note: 开始事务（请求seata server），创建GlobalSession并持久化；
+                // 发送远程请求(GlobalBeginRequest)开启事务, seata server端接受请求处理开启事务
                 beginTransaction(txInfo, tx);
 
                 Object rs;
                 try {
                     // Do Your Business
+                    // note: 执行原始方法(一阶段业务代码)
                     rs = business.execute();
                 } catch (Throwable ex) {
                     // 3. The needed business exception to rollback.
+                    // note: 一阶段异常，执行回滚，发送GlobalRollbackRequest请求
                     completeTransactionAfterThrowing(txInfo, tx, ex);
                     throw ex;
                 }
 
                 // 4. everything is fine, commit.
+                // note: 提交事务，发送GlobalCommitRequest请求
                 commitTransaction(tx, txInfo);
 
                 return rs;
@@ -221,6 +227,7 @@ public class TransactionalTemplate {
 
         try {
             triggerBeforeCommit();
+            // note: 客户端提交事务，tx为DefaultGlobalTransaction，发送远程请求seata server提交事务
             tx.commit();
             GlobalStatus afterCommitStatus = tx.getLocalStatus();
             TransactionalExecutor.Code code = TransactionalExecutor.Code.Unknown;

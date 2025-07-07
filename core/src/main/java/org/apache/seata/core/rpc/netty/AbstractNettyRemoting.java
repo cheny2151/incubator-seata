@@ -290,6 +290,7 @@ public abstract class AbstractNettyRemoting implements Disposable {
 
     /**
      * Rpc message processing.
+     * note: RPC消息处理的入口，例如GlobalBeginRequest
      *
      * @param ctx        Channel handler context.
      * @param rpcMessage rpc message.
@@ -303,6 +304,12 @@ public abstract class AbstractNettyRemoting implements Disposable {
         Object body = rpcMessage.getBody();
         if (body instanceof MessageTypeAware) {
             MessageTypeAware messageTypeAware = (MessageTypeAware) body;
+            // note: 不同的消息路由到不同的处理器；
+            // 服务端见：org.apache.seata.core.rpc.netty.NettyRemotingServer.registerProcessor
+            // 客户端见：
+            // - org.apache.seata.core.rpc.netty.RmNettyRemotingClient.registerProcessor
+            // - org.apache.seata.core.rpc.netty.TmNettyRemotingClient.registerProcessor
+            // 以GlobalBeginRequest为例，使用的是ServerOnRequestProcessor
             final Pair<RemotingProcessor, ExecutorService> pair =
                     this.processorTable.get((int) messageTypeAware.getTypeCode());
             if (pair != null) {

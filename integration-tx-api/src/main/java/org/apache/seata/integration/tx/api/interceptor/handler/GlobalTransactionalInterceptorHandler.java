@@ -151,6 +151,7 @@ public class GlobalTransactionalInterceptorHandler extends AbstractProxyInvocati
         if (specificMethod != null && !specificMethod.getDeclaringClass().equals(Object.class)) {
             boolean localDisable = disable || (ATOMIC_DEGRADE_CHECK.get() && degradeNum >= degradeCheckAllowTimes);
             if (!localDisable) {
+                // note: 尝试解析方法/类上的@GlobalTransactional
                 final AspectTransactional globalTransactionalAnnotation =
                         getAspectTransactional(specificMethod, targetClass);
                 final GlobalLockConfig globalLockAnnotation = getGlobalLockConfig(specificMethod, targetClass);
@@ -161,6 +162,7 @@ public class GlobalTransactionalInterceptorHandler extends AbstractProxyInvocati
                     } else {
                         transactional = this.aspectTransactional;
                     }
+                    // note: 处理全局事务（开启事务？执行原方法）
                     return handleGlobalTransaction(invocation, transactional);
                 } else if (globalLockAnnotation != null) {
                     return handleGlobalLock(invocation, globalLockAnnotation);

@@ -251,6 +251,7 @@ public class DefaultCore implements Core {
             if (globalSession.getStatus() == GlobalStatus.Begin) {
                 // Highlight: Firstly, close the session, then no more branch can be registered.
                 globalSession.close();
+                // note: AT模式（提交只需要删除undo log）或者事务第一阶段失败都可以异步提交
                 if (globalSession.canBeCommittedAsync()) {
                     globalSession.asyncCommit();
                     MetricsPublisher.postSessionDoneEvent(globalSession, GlobalStatus.Committed, false, false);
@@ -264,6 +265,7 @@ public class DefaultCore implements Core {
             return shouldCommitNow;
         });
 
+        // note: 非异步提交
         if (shouldCommit) {
             boolean success = doGlobalCommit(globalSession, false);
             // If successful and all remaining branches can be committed asynchronously, do async commit.
@@ -289,6 +291,7 @@ public class DefaultCore implements Core {
         if (globalSession.isSaga()) {
             success = getCore(BranchType.SAGA).doGlobalCommit(globalSession, retrying);
         } else {
+            // note: 提交所有分支
             List<BranchSession> branchSessions = globalSession.getSortedBranches();
             Boolean result = SessionHelper.forEach(
                     branchSessions,
@@ -390,6 +393,7 @@ public class DefaultCore implements Core {
         // if it succeeds and there is no branch, retrying=true is the asynchronous state when retrying. EndCommitted is
         // executed to improve concurrency performance, and the global transaction ends..
         if (success && globalSession.getBranchSessions().isEmpty()) {
+            // note: 将事务更新为committed状态等其他操作
             SessionHelper.endCommitted(globalSession, retrying);
             LOGGER.info("Committing global transaction is successfully done, xid = {}.", globalSession.getXid());
         }
@@ -442,6 +446,10 @@ public class DefaultCore implements Core {
                             return CONTINUE;
                         }
                         try {
+                            // note: 执行回滚分支
+                            // 对于事务协调者seata server，回滚分支需要请求客户端执行回滚逻辑；
+                            // 例如：AT回滚本地事务，TCC的rollback方法
+                            // （客户端接收请求后路由到处理器：org.apache.seata.core.rpc.processor.client.RmBranchRollbackProcessor）
                             BranchStatus branchStatus = branchRollback(globalSession, branchSession);
                             if (isXaerNotaTimeout(globalSession, branchStatus)) {
                                 LOGGER.info(

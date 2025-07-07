@@ -36,6 +36,10 @@ public class AdapterSpringSeataInterceptor implements MethodInterceptor, SeataIn
         this.proxyInvocationHandler = proxyInvocationHandler;
     }
 
+    /**
+     * note:集成spring时的代理方法，@GlobalTransactional等注解的AOP拦截入口
+     *     后续交由对应的处理器实现执行：GlobalTransactional,TccAction,Saga
+     */
     @Nullable
     @Override
     public Object invoke(@Nonnull MethodInvocation invocation) throws Throwable {

@@ -72,6 +72,7 @@ public class GlobalBeginRequest extends AbstractTransactionRequestToTC {
 
     @Override
     public AbstractTransactionResponse handle(RpcContext rpcContext) {
+        // note: rpc请求到seata server端后，将调用到此函数，最后由AbstractTCInboundHandler#handle处理
         return handler.handle(this, rpcContext);
     }
 
