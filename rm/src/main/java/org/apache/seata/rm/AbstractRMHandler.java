@@ -128,6 +128,9 @@ public abstract class AbstractRMHandler extends AbstractExceptionHandler
             LOGGER.info("Branch Rollbacking: " + xid + " " + branchId + " " + resourceId);
         }
         // note: 不同的事务方案路由到不同的manager执行回滚逻辑
+        // - AT: 查询undo log回滚
+        // - TCC: 执行rollback函数
+        // - XA: 执行xa rollback
         BranchStatus status = getResourceManager()
                 .branchRollback(request.getBranchType(), xid, branchId, resourceId, applicationData);
         response.setXid(xid);

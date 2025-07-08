@@ -225,11 +225,13 @@ public class SpringFenceHandler implements FenceHandler {
     @Override
     public boolean rollbackFence(
             Method rollbackMethod, Object targetTCCBean, String xid, Long branchId, Object[] args, String actionName) {
+        // note: 获取期望事务隔离级别的transaction template
         TransactionTemplate template = createTransactionTemplateForTransactionalMethod(
                 MethodUtils.getTransactionalAnnotationByMethod(rollbackMethod, targetTCCBean));
         return template.execute(status -> {
             try {
                 Connection conn = DataSourceUtils.getConnection(dataSource);
+                // note: 查询xid,branchId的fence记录
                 CommonFenceDO commonFenceDO = COMMON_FENCE_DAO.queryCommonFenceDO(conn, xid, branchId);
                 // non_rollback
                 if (commonFenceDO == null) {
@@ -262,9 +264,11 @@ public class SpringFenceHandler implements FenceHandler {
                                     branchId,
                                     commonFenceDO.getStatus());
                         }
+                        // 已提交，返回false
                         return false;
                     }
                 }
+                // STATUS_TRIED状态更新为STATUS_ROLLBACKED
                 boolean result = updateStatusAndInvokeTargetMethod(
                         conn,
                         rollbackMethod,

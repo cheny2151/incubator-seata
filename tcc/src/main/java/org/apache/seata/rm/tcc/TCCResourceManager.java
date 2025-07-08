@@ -211,6 +211,7 @@ public class TCCResourceManager extends AbstractResourceManager {
             Object ret;
             boolean result;
             // add idempotent and anti hanging
+            // note: 启用“防悬挂机制”（TCC Fence），用于防止空回滚和资源悬挂问题。
             if (Boolean.TRUE.equals(businessActionContext.getActionContext(Constants.USE_COMMON_FENCE))) {
                 try {
                     result = DefaultCommonFenceHandler.get()

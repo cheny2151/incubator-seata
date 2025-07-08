@@ -446,9 +446,9 @@ public class DefaultCore implements Core {
                             return CONTINUE;
                         }
                         try {
-                            // note: 执行回滚分支
-                            // 对于事务协调者seata server，回滚分支需要请求客户端执行回滚逻辑；
-                            // 例如：AT回滚本地事务，TCC的rollback方法
+                            // note: 执行事务分支回滚
+                            // 对于事务协调者seata server，回滚分支需要发送BranchRollbackRequest请求客户端执行回滚逻辑；
+                            // 例如：AT执行undo log回滚事务，TCC的rollback方法
                             // （客户端接收请求后路由到处理器：org.apache.seata.core.rpc.processor.client.RmBranchRollbackProcessor）
                             BranchStatus branchStatus = branchRollback(globalSession, branchSession);
                             if (isXaerNotaTimeout(globalSession, branchStatus)) {

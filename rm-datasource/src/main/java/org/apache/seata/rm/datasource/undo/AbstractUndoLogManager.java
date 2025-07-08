@@ -387,6 +387,9 @@ public abstract class AbstractUndoLogManager implements UndoLogManager {
                     }
                 }
 
+                // note: 执行回滚分支时
+                // - 如果回滚日志存在则执行回滚并删除undo log
+                // - 如果回滚日志不存在则插入GlobalFinished state的undo log，防止第一阶段后续被执行
                 // If undo_log exists, it means that the branch transaction has completed the first phase,
                 // we can directly roll back and clean the undo_log
                 // Otherwise, it indicates that there is an exception in the branch transaction,
